@@ -18,6 +18,21 @@ Supabase settings are read from the local `.env` file, which is excluded from Gi
 
 The local web server also blocks all `/data` URLs. Trial records and participant counters are not written locally; unique participant IDs are generated in memory, and the database has no anonymous read policy.
 
+## Deploy to Vercel
+
+The project is ready for Vercel's **Other** framework preset. The HTML, CSS, JavaScript, and images are static files. Vercel runs `api/participant.py` and `api/save.py` as temporary Python Functions, so no permanent Python server or custom port is required.
+
+In Vercel's Build and Output Settings, leave the Build Command, Output Directory, and Install Command blank. Add these environment variables for Production, Preview, and Development:
+
+```text
+SUPABASE_URL=https://axusexbryxfjszklcjnv.supabase.co
+SUPABASE_PUBLISHABLE_KEY=<your publishable key>
+```
+
+Do not add a frontend prefix to either variable. Redeploy after adding or changing environment variables. The local `.env` file is excluded from Git and Vercel uploads.
+
+The browser calls `/api/participant` to obtain a unique ID and `/api/save` to submit completed trials. Only the Python function reads the Supabase environment variables.
+
 ## Change experiment settings
 
 There is no participant-facing setup screen. All settings are at the top of `app.js` in the `CONFIG` object. Edit a number, save the file, and restart `app.py` before the next participant.

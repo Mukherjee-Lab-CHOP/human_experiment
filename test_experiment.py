@@ -1,7 +1,7 @@
 import unittest
 
 from experiment import HORIZONTAL, VERTICAL, ProbabilityReversalExperiment
-from app import SUPABASE_FIELDS, build_supabase_record, reserve_participant_id
+from backend import SUPABASE_FIELDS, build_supabase_record, reserve_participant_id
 
 
 class ExperimentTests(unittest.TestCase):

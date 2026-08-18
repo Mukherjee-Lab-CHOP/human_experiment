@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+data/
+supabase/
+test_experiment.py
+experiment.py

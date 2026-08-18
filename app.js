@@ -89,7 +89,7 @@ function resetBaiting() {
 
 $('start').onclick = async () => {
   try {
-    const response = await fetch('/next-participant', { cache: 'no-store' });
+    const response = await fetch('/api/participant', { cache: 'no-store' });
     if (!response.ok) throw Error('Could not assign a participant ID');
 
     const participant = (await response.json()).participant_id;
@@ -284,7 +284,7 @@ function nextActionLabel() {
 
 async function savePendingTrial() {
   pendingRow.saved_at = new Date().toISOString();
-  const response = await fetch('/save', {
+  const response = await fetch('/api/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(pendingRow),
