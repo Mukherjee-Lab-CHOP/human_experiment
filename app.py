@@ -16,11 +16,14 @@ DATA = ROOT / "data"
 SEQUENCE_FILE = DATA / ".participant_sequence"
 SEQUENCE_LOCK = threading.Lock()
 CSV_FIELDS = [
-    "participant_id", "trial_number", "block", "reversed", "left_orientation",
-    "right_orientation", "horizontal_base_probability", "vertical_base_probability",
-    "horizontal_unchosen_before", "vertical_unchosen_before", "horizontal_baited",
-    "vertical_baited", "choice_side", "chosen_orientation", "reaction_time_ms",
-    "reward", "cumulative_score", "timestamp",
+    "participant_id", "session_id", "phase", "trial_number", "block_number",
+    "block_trial_number", "block_length", "total_scheduled_main_trials",
+    "probability_condition", "favored_fruit", "favored_fruit_switched",
+    "left_stimulus", "right_stimulus", "apple_base_probability",
+    "banana_base_probability", "apple_unchosen_before", "banana_unchosen_before",
+    "apple_baited", "banana_baited", "choice_side", "chosen_stimulus",
+    "choice_clicked_at", "response_recorded_at", "next_clicked_at",
+    "reaction_time_ms", "reward", "cumulative_score", "saved_at",
 ]
 
 
