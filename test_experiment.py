@@ -1,15 +1,15 @@
 import unittest
-import tempfile
 
 from experiment import HORIZONTAL, VERTICAL, ProbabilityReversalExperiment
-from app import reserve_participant_id
+from app import SUPABASE_FIELDS, build_supabase_record, reserve_participant_id
 
 
 class ExperimentTests(unittest.TestCase):
-    def test_participant_ids_are_persistent_and_sequential(self):
-        with tempfile.TemporaryDirectory() as folder:
-            self.assertEqual(reserve_participant_id(folder), "participant_001")
-            self.assertEqual(reserve_participant_id(folder), "participant_002")
+    def test_participant_ids_are_unique_without_local_state(self):
+        first = reserve_participant_id()
+        second = reserve_participant_id()
+        self.assertRegex(first, r"^participant_[0-9a-f]{32}$")
+        self.assertNotEqual(first, second)
 
     def test_effective_probability_matches_shrew_formula(self):
         self.assertAlmostEqual(
@@ -44,6 +44,29 @@ class ExperimentTests(unittest.TestCase):
         exp.start_trial()
         exp.timeout()
         self.assertEqual((exp.horizontal_unchosen, exp.vertical_unchosen), (0, 0))
+
+    def test_supabase_record_is_allowlisted_and_normalized(self):
+        payload = {field: "value" for field in SUPABASE_FIELDS}
+        for field in (
+            "block_number", "block_trial_number", "block_length", "favored_fruit",
+            "favored_fruit_switched", "chosen_stimulus", "choice_clicked_at",
+            "reaction_time_ms",
+        ):
+            payload[field] = ""
+        for field in ("apple_baited", "banana_baited", "reward"):
+            payload[field] = 1
+        payload["not_a_database_column"] = "discard me"
+
+        record = build_supabase_record(payload)
+
+        self.assertNotIn("not_a_database_column", record)
+        self.assertIsNone(record["block_number"])
+        self.assertIsNone(record["favored_fruit_switched"])
+        self.assertIs(record["reward"], True)
+
+    def test_supabase_record_rejects_missing_fields(self):
+        with self.assertRaisesRegex(ValueError, "Missing required fields"):
+            build_supabase_record({})
 
 
 if __name__ == "__main__":

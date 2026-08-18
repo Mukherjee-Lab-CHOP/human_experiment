@@ -6,11 +6,17 @@ A local browser-based apple-versus-banana choice task. It begins with 5 practice
 
 Requires Python 3. No external packages are needed.
 
+Before the first run, open this project's Supabase SQL Editor and run the contents of `supabase/setup.sql`. This creates the `experiment_trials` table with Row Level Security, grants anonymous clients INSERT only, and intentionally provides no SELECT, UPDATE, or DELETE access.
+
 ```bash
 python3 app.py
 ```
 
-The experiment opens in your browser. Keep the launching terminal open so each trial can be saved to CSV. Participants click either fruit to make their choice. Results are written to `data/<participant>_<timestamp>.csv` after **Next trial** is clicked.
+The experiment opens in your browser. Keep the launching terminal open so each trial can be saved. Participants click either fruit to make their choice. After **Next trial** is clicked, the browser sends the completed row only to the local Python backend. The backend validates it and writes it to Supabase.
+
+Supabase settings are read from the local `.env` file, which is excluded from Git. Copy `.env.example` when configuring another computer. The Supabase URL and publishable key are never included in the browser JavaScript.
+
+The local web server also blocks all `/data` URLs. Trial records and participant counters are not written locally; unique participant IDs are generated in memory, and the database has no anonymous read policy.
 
 ## Change experiment settings
 
@@ -62,7 +68,7 @@ Once baited, its reward persists until that fruit is chosen.
 
 ## Saved timestamps and block data
 
-Every CSV row records the block number, within-block trial number, randomized block length, probability condition, favored fruit, and whether the favored fruit switched from the preceding block. It also records:
+Every Supabase row records the block number, within-block trial number, randomized block length, probability condition, favored fruit, and whether the favored fruit switched from the preceding block. It also records:
 
 - `choice_clicked_at`: when the participant clicked apple or banana; blank after a timeout.
 - `response_recorded_at`: when the choice or timeout was processed.
