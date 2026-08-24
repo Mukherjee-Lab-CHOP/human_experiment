@@ -17,13 +17,23 @@ h1 { font-size: 2rem; text-align: center; margin: 0 0 18px; }
 button { border: 0; border-radius: 9px; background: var(--accent); color: #07101f; font-weight: 750; font-size: 1rem; padding: 12px 25px; cursor: pointer; }
 button:hover:not(:disabled) { filter: brightness(1.1); }
 .center { text-align: center; margin-top: 28px; }
-.instructions { font-size: 1.1rem; line-height: 1.6; }
 .hidden { display: none !important; }
 
+.tutorial-card { width: min(820px, 95vw); }
+.tutorial-progress { margin: 0 0 8px; color: var(--muted); text-align: center; font-weight: 700; }
+.tutorial-text { min-height: 58px; margin: 0 auto 22px; max-width: 650px; text-align: center; font-size: 1.22rem; line-height: 1.5; }
+.tutorial-options { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.tutorial-option { position: relative; min-height: 300px; padding: 30px; background: #131823; border: 4px solid #343c4d; border-radius: 18px; }
+.tutorial-option:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-2px); }
+.tutorial-option img { display: block; width: 100%; height: 240px; object-fit: contain; }
+.tutorial-probability { position: absolute; z-index: 1; top: 14px; left: 50%; transform: translateX(-50%); padding: 7px 15px; border-radius: 999px; background: #f4f6fb; color: #111827; font-size: 1.45rem; font-weight: 850; box-shadow: 0 6px 18px #0006; }
+
 #task { width: min(1100px, 96vw); }
+.experiment-progress { width: 100%; height: 14px; margin-bottom: 18px; overflow: hidden; border: 1px solid #465066; border-radius: 999px; background: #252b38; }
+.experiment-progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4c8df6, var(--accent)); transition: width .25s ease; }
 .top { display: flex; justify-content: space-between; color: var(--muted); font-weight: 650; padding: 0 12px; }
-.score { display: inline-flex; align-items: center; gap: 9px; color: var(--text); font-size: 1.25rem; }
-.score img { width: 54px; height: 42px; object-fit: contain; }
+.score { display: inline-flex; align-items: center; gap: 13px; color: var(--text); font-size: 1.75rem; font-weight: 850; }
+.score img { width: 82px; height: 64px; object-fit: contain; }
 .prompt { text-align: center; font-size: 1.8rem; font-weight: 750; min-height: 52px; margin: 22px 0 12px; }
 .options { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; }
 .option { background: var(--panel); border: 5px solid #343c4d; border-radius: 18px; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); font-weight: 750; transition: .15s; }
@@ -42,6 +52,9 @@ button:hover:not(:disabled) { filter: brightness(1.1); }
 
 @media (max-width: 700px) {
   .card { padding: 30px 24px; }
+  .tutorial-options { gap: 12px; }
+  .tutorial-option { min-height: 230px; padding: 14px; }
+  .tutorial-option img { height: 190px; }
   .options { gap: 12px; }
   .option { min-height: 300px; padding: 12px; }
   .stimulus { width: 90%; height: 210px; }

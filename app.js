@@ -1,4 +1,5 @@
 const CONFIG = Object.freeze({
+  debugMode: false,
   blockCount: 10,
   blockBaseTrials: 60,
   blockExtraTrialsMin: 1,
@@ -12,7 +13,7 @@ const CONFIG = Object.freeze({
   favoredFruitSwitchChance: 0.50,
   practiceTrials: 5,
   practiceRewardProbability: 0.50,
-  responseTimeoutSeconds: 20,
+  responseTimeoutSeconds: 3,
 });
 
 const $ = (id) => document.getElementById(id);
@@ -28,6 +29,7 @@ let active = false;
 let timer;
 let started;
 let sessionId;
+let tutorialStage = 0;
 
 function show(id) {
   ['instructions', 'task', 'complete'].forEach((name) =>
@@ -76,8 +78,10 @@ function makeBlockSchedule() {
   return blocks;
 }
 
-function effectiveProbability(baseProbability, unchosenTrials) {
-  return 1 - Math.pow(1 - baseProbability, unchosenTrials + 1);
+function queuedRewardProbability(baseProbability, skippedTrials) {
+  // P(queue reward) = 1 - (1 - p)^(n + 1), calculated independently per fruit.
+  // Once queued, a reward remains available until that fruit is selected.
+  return 1 - Math.pow(1 - baseProbability, skippedTrials + 1);
 }
 
 function resetBaiting() {
@@ -86,6 +90,41 @@ function resetBaiting() {
   state.appleBaited = false;
   state.bananaBaited = false;
 }
+
+function showTutorialStage(stage) {
+  tutorialStage = stage;
+  $('tutorialProgress').textContent = `${stage + 1} of 4`;
+  const showProbabilities = stage >= 2;
+  $('tutorialAppleProbability').classList.toggle('hidden', !showProbabilities);
+  $('tutorialBananaProbability').classList.toggle('hidden', !showProbabilities);
+  $('tutorialContinue').classList.toggle('hidden', stage !== 2);
+  $('start').classList.toggle('hidden', stage !== 3);
+  $('tutorialApple').disabled = stage >= 2;
+  $('tutorialBanana').disabled = stage >= 2;
+
+  if (stage === 0) {
+    $('tutorialText').textContent = 'You’ll be given the option of an apple or a banana. Your goal is to collect as many gold coins as possible. Click either fruit to continue.';
+  } else if (stage === 1) {
+    $('tutorialText').textContent = 'One fruit will have a higher probability of giving a gold coin, and the other will have a lower probability. Click either fruit.';
+  } else if (stage === 2) {
+    $('tutorialText').textContent = 'Here were their probabilities of giving a gold coin.';
+    $('tutorialAppleProbability').textContent = '80%';
+    $('tutorialBananaProbability').textContent = '20%';
+  } else {
+    $('tutorialText').textContent = 'Periodically, the gold-coin probabilities may switch—including which fruit has the higher probability.';
+    $('tutorialAppleProbability').textContent = '20%';
+    $('tutorialBananaProbability').textContent = '80%';
+  }
+}
+
+function chooseTutorialFruit() {
+  if (tutorialStage < 2) showTutorialStage(tutorialStage + 1);
+}
+
+$('tutorialApple').onclick = chooseTutorialFruit;
+$('tutorialBanana').onclick = chooseTutorialFruit;
+$('tutorialContinue').onclick = () => showTutorialStage(3);
+showTutorialStage(0);
 
 $('start').onclick = async () => {
   try {
@@ -144,10 +183,10 @@ function beginTrial() {
       ? currentBlock.highProbability
       : currentBlock.lowProbability;
     if (!state.appleBaited) {
-      state.appleBaited = Math.random() < effectiveProbability(appleProbability, state.appleUnchosen);
+      state.appleBaited = Math.random() < queuedRewardProbability(appleProbability, state.appleUnchosen);
     }
     if (!state.bananaBaited) {
-      state.bananaBaited = Math.random() < effectiveProbability(bananaProbability, state.bananaUnchosen);
+      state.bananaBaited = Math.random() < queuedRewardProbability(bananaProbability, state.bananaUnchosen);
     }
     appleBaited = state.appleBaited;
     bananaBaited = state.bananaBaited;
@@ -179,6 +218,8 @@ function beginTrial() {
   $('progress').textContent = isPractice
     ? `Practice ${number} of ${CONFIG.practiceTrials}`
     : `Block ${currentBlock.number} of ${CONFIG.blockCount} • Trial ${trial.blockTrialNumber} of ${currentBlock.length}`;
+  $('progress').classList.toggle('hidden', !CONFIG.debugMode);
+  updateExperimentProgress();
   $('score').classList.toggle('hidden', isPractice);
   $('scoreValue').textContent = state.score;
   $('prompt').textContent = isPractice ? 'Practice: choose one' : 'Choose one';
@@ -190,6 +231,14 @@ function beginTrial() {
   active = true;
   started = performance.now();
   timer = setTimeout(() => respond('TIMEOUT'), CONFIG.responseTimeoutSeconds * 1000);
+}
+
+function updateExperimentProgress() {
+  const completed = state.practiceCompleted + state.mainCompleted;
+  const total = CONFIG.practiceTrials + state.totalMainTrials;
+  const percentage = total > 0 ? (completed / total) * 100 : 0;
+  $('experimentProgressBar').style.width = `${percentage}%`;
+  $('experimentProgress').setAttribute('aria-valuenow', String(Math.round(percentage)));
 }
 
 function respond(side) {
@@ -232,6 +281,7 @@ function respond(side) {
     state.mainCompleted++;
     state.blockCompleted++;
   }
+  updateExperimentProgress();
 
   pendingRow = {
     participant_id: state.participant,
@@ -268,7 +318,7 @@ function respond(side) {
   $('score').classList.toggle('hidden', trial.phase === 'practice');
   $('scoreValue').textContent = state.score;
   $('coinReward').classList.toggle('hidden', !rewarded);
-  $('feedbackText').textContent = side === 'TIMEOUT' ? 'No reward — time ran out' : rewarded ? 'Reward!' : 'No reward';
+  $('feedbackText').textContent = side === 'TIMEOUT' ? 'No gold coin — time ran out' : rewarded ? 'Gold coin!' : 'No gold coin';
   $('feedbackText').className = rewarded ? 'status-ok' : 'status-bad';
   $('nextTrial').textContent = nextActionLabel();
   $('nextTrial').disabled = false;

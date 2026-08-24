@@ -8,19 +8,30 @@
 </head>
 <body>
   <main>
-    <section id="instructions" class="card">
-      <h1>Choose the option with the reward</h1>
-      <div class="instructions">
-        <p>On every trial you will see an apple and a banana.</p>
-        <p>Click an option to make your choice.</p>
-        <p>Each option has its own independent chance of containing a reward. On any trial, both options, one option, or neither option may contain a reward.</p>
-        <p>The reward chances can change during the experiment, so use the feedback to guide your choices.</p>
-        <p>You will begin with 5 practice trials. After every choice, review the feedback and click <b>Next trial</b>.</p>
+    <section id="instructions" class="card tutorial-card">
+      <p id="tutorialProgress" class="tutorial-progress">1 of 4</p>
+      <h1>How it works</h1>
+      <p id="tutorialText" class="tutorial-text">You’ll be given the option of an apple or a banana. Your goal is to collect as many gold coins as possible. Click either fruit to continue.</p>
+      <div class="tutorial-options">
+        <button id="tutorialApple" class="tutorial-option" aria-label="Apple">
+          <span id="tutorialAppleProbability" class="tutorial-probability hidden">80%</span>
+          <img src="assets/apple.png" alt="Apple">
+        </button>
+        <button id="tutorialBanana" class="tutorial-option" aria-label="Banana">
+          <span id="tutorialBananaProbability" class="tutorial-probability hidden">20%</span>
+          <img src="assets/banana.png" alt="Banana">
+        </button>
       </div>
-      <div class="center"><button id="start">Start practice</button></div>
+      <div class="center">
+        <button id="tutorialContinue" class="hidden">Continue</button>
+        <button id="start" class="hidden">Start practice</button>
+      </div>
     </section>
 
     <section id="task" class="hidden">
+      <div id="experimentProgress" class="experiment-progress" role="progressbar" aria-label="Experiment progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="experimentProgressBar" class="experiment-progress-bar"></div>
+      </div>
       <div class="top">
         <span id="progress"></span>
         <span id="score" class="score"><img src="assets/total-coins.png" alt="Gold coins"><span id="scoreValue">0</span></span>
@@ -46,7 +57,7 @@
       <h1>Experiment complete</h1>
       <img class="complete-coins" src="assets/total-coins.png" alt="Stack of gold coins">
       <p id="finalScore" class="subtitle"></p>
-      <p class="subtitle">Results were saved in the experiment’s data folder.</p>
+      <p class="subtitle">Your results have been saved.</p>
     </section>
   </main>
   <script src="app.js"></script>

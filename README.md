@@ -39,6 +39,7 @@ There is no participant-facing setup screen. All settings are at the top of `app
 
 ```js
 const CONFIG = Object.freeze({
+  debugMode: false,                // Show block/trial progress when true
   blockCount: 10,
   blockBaseTrials: 60,
   blockExtraTrialsMin: 1,
@@ -73,13 +74,15 @@ During practice, apple and banana independently have a 50% chance of reward on e
 
 ## Reward rule
 
-Main trials use independent baiting. An unbaited fruit is tested at the start of a trial using:
+Main trials queue rewards independently for apple and banana. An unbaited fruit is tested at the start of a trial using:
 
 ```text
 1 - (1 - base_probability)^(unchosen_trials + 1)
 ```
 
-Once baited, its reward persists until that fruit is chosen.
+Here, `p` is that fruit's block probability and `n` is the number of consecutive trials it was skipped before the current trial. Once a reward is queued, it persists until that fruit is chosen. Selecting the fruit consumes the queued reward and resets its skipped count; the other fruit's skipped count increases by one.
+
+Block and trial counters are hidden from participants, while a number-free progress bar advances across practice and the full experiment. Set `debugMode` to `true` to display the counters during testing. Each choice trial times out after 3 seconds; after a timeout, the participant must click **Next trial** to continue.
 
 ## Saved timestamps and block data
 
