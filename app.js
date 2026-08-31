@@ -10,7 +10,6 @@ const CONFIG = Object.freeze({
   minimumChangedBlocks: 2,
   changedHighProbability: 0.65,
   changedLowProbability: 0.35,
-  favoredFruitSwitchChance: 0.50,
   practiceTrials: 5,
   practiceRewardProbability: 0.50,
   responseTimeoutSeconds: 3,
@@ -62,7 +61,7 @@ function makeBlockSchedule() {
   const blocks = [];
   let favoredFruit = Math.random() < 0.5 ? 'APPLE' : 'BANANA';
   for (let index = 0; index < CONFIG.blockCount; index++) {
-    const favoredSwitched = index > 0 && Math.random() < CONFIG.favoredFruitSwitchChance;
+    const favoredSwitched = index > 0;
     if (favoredSwitched) favoredFruit = oppositeFruit(favoredFruit);
     const changed = changedConditions[index];
     blocks.push({

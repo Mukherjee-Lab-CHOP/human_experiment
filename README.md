@@ -50,7 +50,6 @@ const CONFIG = Object.freeze({
   minimumChangedBlocks: 2,        // Guarantee at least two 65/35 blocks
   changedHighProbability: 0.65,
   changedLowProbability: 0.35,
-  favoredFruitSwitchChance: 0.50, // At each boundary: switch vs. stay
   practiceTrials: 5,
   practiceRewardProbability: 0.50,
   responseTimeoutSeconds: 20,
@@ -67,7 +66,7 @@ Each participant receives a newly randomized 10-block schedule:
 - Block 1 always uses an 80/20 probability spread. A 50/50 draw determines whether apple or banana is favored.
 - Blocks 2–10 independently have a 10% chance of using 65/35 instead of 80/20.
 - If random generation produces fewer than two 65/35 blocks, additional blocks are selected so the schedule always contains at least two.
-- At each block boundary, there is an independent 50% chance that the favored fruit switches and a 50% chance it remains the same.
+- Every block boundary is a reversal: the fruit with the higher probability always switches. Block 1 randomly assigns the higher probability to apple or banana, and the favored fruit then alternates for every subsequent block.
 - Bait and unchosen-trial counters reset at every block boundary.
 
 During practice, apple and banana independently have a 50% chance of reward on each trial. Practice results are labeled with `phase` set to `practice`.
