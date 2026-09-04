@@ -49,7 +49,7 @@ class ExperimentTests(unittest.TestCase):
         payload = {field: "value" for field in SUPABASE_FIELDS}
         for field in (
             "block_number", "block_trial_number", "block_length", "favored_fruit",
-            "favored_fruit_switched", "chosen_stimulus", "choice_clicked_at",
+            "schedule_id", "block_type", "favored_fruit_switched", "chosen_stimulus", "choice_clicked_at",
             "reaction_time_ms",
         ):
             payload[field] = ""

@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 SUPABASE_FIELDS = [
     "participant_id", "session_id", "phase", "trial_number", "block_number",
     "block_trial_number", "block_length", "total_scheduled_main_trials",
-    "probability_condition", "favored_fruit", "favored_fruit_switched",
+    "schedule_id", "block_type", "probability_condition", "favored_fruit", "favored_fruit_switched",
     "left_stimulus", "right_stimulus", "apple_base_probability",
     "banana_base_probability", "apple_unchosen_before", "banana_unchosen_before",
     "apple_baited", "banana_baited", "choice_side", "chosen_stimulus",
@@ -25,7 +25,8 @@ BOOLEAN_FIELDS = {
     "favored_fruit_switched", "apple_baited", "banana_baited", "reward"
 }
 NULLABLE_FIELDS = {
-    "block_number", "block_trial_number", "block_length", "favored_fruit",
+    "block_number", "block_trial_number", "block_length", "schedule_id",
+    "block_type", "favored_fruit",
     "favored_fruit_switched", "chosen_stimulus", "choice_clicked_at",
     "reaction_time_ms",
 }

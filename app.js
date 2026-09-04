@@ -1,19 +1,24 @@
 const CONFIG = Object.freeze({
   debugMode: false,
-  blockCount: 10,
-  blockBaseTrials: 60,
-  blockExtraTrialsMin: 1,
-  blockExtraTrialsMax: 30,
-  standardHighProbability: 0.80,
-  standardLowProbability: 0.20,
-  changedBlockChance: 0.10,
-  minimumChangedBlocks: 2,
-  changedHighProbability: 0.65,
-  changedLowProbability: 0.35,
+  blockCount: 9,
   practiceTrials: 5,
   practiceRewardProbability: 0.50,
   responseTimeoutSeconds: 3,
 });
+
+const BLOCK_PROBABILITIES = Object.freeze({
+  H: Object.freeze({ high: 0.50, low: 0.50, label: '50/50' }),
+  M: Object.freeze({ high: 0.65, low: 0.35, label: '65/35' }),
+  L: Object.freeze({ high: 0.80, low: 0.20, label: '80/20' }),
+});
+
+// Generated once from a geometric distribution constrained to 30–150 trials
+// with an expected mean of 60, then frozen for reproducible experiments.
+const FIXED_SCHEDULES = Object.freeze([
+  Object.freeze({ id: 'schedule_1', types: 'LHLMLLMLL', lengths: Object.freeze([45, 116, 54, 31, 36, 66, 78, 33, 81]) }),
+  Object.freeze({ id: 'schedule_2', types: 'LMLLHLLML', lengths: Object.freeze([31, 42, 48, 103, 31, 120, 73, 59, 33]) }),
+  Object.freeze({ id: 'schedule_3', types: 'LLMLLMLHL', lengths: Object.freeze([42, 37, 68, 34, 69, 117, 78, 42, 53]) }),
+]);
 
 const $ = (id) => document.getElementById(id);
 const STIMULI = {
@@ -45,32 +50,23 @@ function oppositeFruit(fruit) {
 }
 
 function makeBlockSchedule() {
-  const changedConditions = Array(CONFIG.blockCount).fill(false);
-  for (let index = 1; index < CONFIG.blockCount; index++) {
-    changedConditions[index] = Math.random() < CONFIG.changedBlockChance;
-  }
-
-  while (changedConditions.filter(Boolean).length < CONFIG.minimumChangedBlocks) {
-    const eligible = [];
-    for (let index = 1; index < CONFIG.blockCount; index++) {
-      if (!changedConditions[index]) eligible.push(index);
-    }
-    changedConditions[eligible[randomInteger(0, eligible.length - 1)]] = true;
-  }
-
+  const schedule = FIXED_SCHEDULES[randomInteger(0, FIXED_SCHEDULES.length - 1)];
   const blocks = [];
-  let favoredFruit = Math.random() < 0.5 ? 'APPLE' : 'BANANA';
-  for (let index = 0; index < CONFIG.blockCount; index++) {
+  let higherProbabilityFruit = Math.random() < 0.5 ? 'APPLE' : 'BANANA';
+  for (let index = 0; index < schedule.types.length; index++) {
     const favoredSwitched = index > 0;
-    if (favoredSwitched) favoredFruit = oppositeFruit(favoredFruit);
-    const changed = changedConditions[index];
+    if (favoredSwitched) higherProbabilityFruit = oppositeFruit(higherProbabilityFruit);
+    const blockType = schedule.types[index];
+    const probabilities = BLOCK_PROBABILITIES[blockType];
     blocks.push({
       number: index + 1,
-      length: CONFIG.blockBaseTrials + randomInteger(CONFIG.blockExtraTrialsMin, CONFIG.blockExtraTrialsMax),
-      changed,
-      highProbability: changed ? CONFIG.changedHighProbability : CONFIG.standardHighProbability,
-      lowProbability: changed ? CONFIG.changedLowProbability : CONFIG.standardLowProbability,
-      favoredFruit,
+      scheduleId: schedule.id,
+      blockType,
+      length: schedule.lengths[index],
+      highProbability: probabilities.high,
+      lowProbability: probabilities.low,
+      favoredFruit: blockType === 'H' ? '' : higherProbabilityFruit,
+      higherProbabilityFruit,
       favoredSwitched: index === 0 ? null : favoredSwitched,
     });
   }
@@ -175,10 +171,10 @@ function beginTrial() {
     appleBaited = Math.random() < appleProbability;
     bananaBaited = Math.random() < bananaProbability;
   } else {
-    appleProbability = currentBlock.favoredFruit === 'APPLE'
+    appleProbability = currentBlock.blockType === 'H' ? currentBlock.highProbability : currentBlock.favoredFruit === 'APPLE'
       ? currentBlock.highProbability
       : currentBlock.lowProbability;
-    bananaProbability = currentBlock.favoredFruit === 'BANANA'
+    bananaProbability = currentBlock.blockType === 'H' ? currentBlock.highProbability : currentBlock.favoredFruit === 'BANANA'
       ? currentBlock.highProbability
       : currentBlock.lowProbability;
     if (!state.appleBaited) {
@@ -198,7 +194,9 @@ function beginTrial() {
     blockNumber: currentBlock?.number ?? '',
     blockTrialNumber: isPractice ? '' : state.blockCompleted + 1,
     blockLength: currentBlock?.length ?? '',
-    probabilityCondition: isPractice ? '50/50 practice' : currentBlock.changed ? '65/35' : '80/20',
+    scheduleId: currentBlock?.scheduleId ?? '',
+    blockType: currentBlock?.blockType ?? '',
+    probabilityCondition: isPractice ? '50/50 practice' : BLOCK_PROBABILITIES[currentBlock.blockType].label,
     favoredFruit: currentBlock?.favoredFruit ?? '',
     favoredSwitched: currentBlock?.favoredSwitched ?? '',
     left: flip ? 'APPLE' : 'BANANA',
@@ -291,6 +289,8 @@ function respond(side) {
     block_trial_number: trial.blockTrialNumber,
     block_length: trial.blockLength,
     total_scheduled_main_trials: state.totalMainTrials,
+    schedule_id: trial.scheduleId,
+    block_type: trial.blockType,
     probability_condition: trial.probabilityCondition,
     favored_fruit: trial.favoredFruit,
     favored_fruit_switched: trial.favoredSwitched === '' ? '' : Number(trial.favoredSwitched),

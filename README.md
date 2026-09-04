@@ -1,12 +1,12 @@
 # Human Probability Reversal Experiment
 
-A local browser-based apple-versus-banana choice task. It begins with 5 practice trials, followed by 10 independently randomized experimental blocks. Participants receive gold-coin feedback and must click **Next trial** after reviewing each result.
+A local browser-based apple-versus-banana choice task. It begins with 5 practice trials, followed by one of three fixed 9-block schedules. Participants receive gold-coin feedback and must click **Next trial** after reviewing each result.
 
 ## Run
 
 Requires Python 3. No external packages are needed.
 
-Before the first run, open this project's Supabase SQL Editor and run the contents of `supabase/setup.sql`. This creates the `experiment_trials` table with Row Level Security, grants anonymous clients INSERT only, and intentionally provides no SELECT, UPDATE, or DELETE access.
+For an existing database, open the Supabase SQL Editor and run `supabase/add_fixed_schedule_fields.sql` once before deploying this version. It adds the fixed-schedule metadata fields used by new trial records.
 
 ```bash
 python3 app.py
@@ -40,33 +40,28 @@ There is no participant-facing setup screen. All settings are at the top of `app
 ```js
 const CONFIG = Object.freeze({
   debugMode: false,                // Show block/trial progress when true
-  blockCount: 10,
-  blockBaseTrials: 60,
-  blockExtraTrialsMin: 1,
-  blockExtraTrialsMax: 30,
-  standardHighProbability: 0.80,
-  standardLowProbability: 0.20,
-  changedBlockChance: 0.10,       // Small per-block chance of 65/35
-  minimumChangedBlocks: 2,        // Guarantee at least two 65/35 blocks
-  changedHighProbability: 0.65,
-  changedLowProbability: 0.35,
+  blockCount: 9,
   practiceTrials: 5,
   practiceRewardProbability: 0.50,
-  responseTimeoutSeconds: 20,
+  responseTimeoutSeconds: 3,
 });
 ```
 
-Probabilities use values from `0` to `1`; for example, `0.10` means 10%.
+The fixed schedule definitions and their block lengths are immediately below `CONFIG` in `app.js`. Probabilities use values from `0` to `1`; for example, `0.20` means 20%.
 
 ## Block schedule
 
-Each participant receives a newly randomized 10-block schedule:
+Each participant is assigned uniformly at random to one of three fixed schedules:
 
-- Each block has 60 trials plus a random whole number from 1–30, giving 61–90 trials per block.
-- Block 1 always uses an 80/20 probability spread. A 50/50 draw determines whether apple or banana is favored.
-- Blocks 2–10 independently have a 10% chance of using 65/35 instead of 80/20.
-- If random generation produces fewer than two 65/35 blocks, additional blocks are selected so the schedule always contains at least two.
-- Every block boundary is a reversal: the fruit with the higher probability always switches. Block 1 randomly assigns the higher probability to apple or banana, and the favored fruit then alternates for every subsequent block.
+| Schedule | Block types | Fixed trial lengths |
+| --- | --- | --- |
+| `schedule_1` | `LHLMLLMLL` | 45, 116, 54, 31, 36, 66, 78, 33, 81 |
+| `schedule_2` | `LMLLHLLML` | 31, 42, 48, 103, 31, 120, 73, 59, 33 |
+| `schedule_3` | `LLMLLMLHL` | 42, 37, 68, 34, 69, 117, 78, 42, 53 |
+
+`H` is 50/50, `M` is 65/35, and `L` is 80/20. Every schedule therefore contains one H block, two M blocks, and six L blocks. The lengths were drawn once from a capped geometric distribution with a minimum of 30, an expected mean of 60, and a maximum of 150 trials. Each listed schedule has an actual mean block length of 60 trials.
+
+- Every block boundary is a reversal. The initially higher-probability fruit is randomized, then alternates at every subsequent block. An H block has no favored fruit, but the alternation continues through it for the following unequal block.
 - Bait and unchosen-trial counters reset at every block boundary.
 
 During practice, apple and banana independently have a 50% chance of reward on each trial. Practice results are labeled with `phase` set to `practice`.
@@ -79,13 +74,13 @@ Main trials queue rewards independently for apple and banana. An unbaited fruit 
 1 - (1 - base_probability)^(unchosen_trials + 1)
 ```
 
-Here, `p` is that fruit's block probability and `n` is the number of consecutive trials it was skipped before the current trial. Once a reward is queued, it persists until that fruit is chosen. Selecting the fruit consumes the queued reward and resets its skipped count; the other fruit's skipped count increases by one.
+Here, `p` is that fruit's block probability and `n` is the number of consecutive completed choices for which it was skipped before the current trial. Both fruits are evaluated independently on every trial when they do not already have a queued reward. Once a reward is queued, it persists until that fruit is chosen. Selecting the fruit consumes its queued reward and resets its skipped count; the other fruit's skipped count increases by one. A timeout is treated as an omission: neither skipped count nor either fruit's queued-reward state changes.
 
 Block and trial counters are hidden from participants, while a number-free progress bar advances across practice and the full experiment. Set `debugMode` to `true` to display the counters during testing. Each choice trial times out after 3 seconds; after a timeout, the participant must click **Next trial** to continue.
 
 ## Saved timestamps and block data
 
-Every Supabase row records the block number, within-block trial number, randomized block length, probability condition, favored fruit, and whether the favored fruit switched from the preceding block. It also records:
+Every Supabase row records the assigned `schedule_id`, block type, block number, within-block trial number, fixed block length, probability condition, favored fruit, and whether the favored fruit switched from the preceding block. It also records:
 
 - `choice_clicked_at`: when the participant clicked apple or banana; blank after a timeout.
 - `response_recorded_at`: when the choice or timeout was processed.
